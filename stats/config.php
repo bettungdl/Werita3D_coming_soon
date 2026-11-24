@@ -8,3 +8,5 @@
 
 // Contraseña para ver las estadísticas (cámbiala por la tuya):
 $WERITA_STATS_PASSWORD = 'werita2026';
+
+return ['password' => $WERITA_STATS_PASSWORD];
