@@ -9,14 +9,19 @@ Página de "Muy Pronto" (Coming Soon) para **Werita 3D**, negocio de impresión 
 - Logo de Werita 3D
 - Cuenta regresiva para el lanzamiento
 - Botones de redes sociales con efectos hover
-- 100% estático: HTML, CSS y JavaScript en un solo archivo (`index.html`)
-- Sin dependencias ni frameworks ni build
+- 📊 Contador interno de estadísticas: visitas y clics por enlace, con fecha/hora de CDMX e IP (vía `stats-server.py`)
+- Sin dependencias ni frameworks ni build (solo Python para el servidor de estadísticas)
 
 ## 📁 Estructura del proyecto
 
 ```
 .
-├── index.html        # Página coming soon (HTML + CSS + JS)
+├── index.html        # Página coming soon (HTML + CSS + JS + tracking)
+├── stats-server.py   # Servidor local que registra visitas y clics
+├── stats/            # Se crea automáticamente al correr el servidor
+│   ├── visits.txt    # Una línea por visita: fecha/hora CDMX | IP | total | navegador
+│   ├── clicks.txt    # Una línea por clic: fecha/hora CDMX | IP | enlace
+│   └── counters.json # Totales acumulados
 ├── img/
 │   └── logoWerita.png  # Logo de Werita 3D
 └── README.md
@@ -33,34 +38,38 @@ Página de "Muy Pronto" (Coming Soon) para **Werita 3D**, negocio de impresión 
 
 > **Nota:** El enlace de Facebook usa temporalmente la URL con ID de perfil. Cuando se pueda configurar el nombre de usuario, se debe actualizar a `https://www.facebook.com/Werita3D`.
 
-## 👀 Vista previa local
-
-Opción 1 — Abrir directamente:
+## 👀 Vista previa local (con estadísticas) ✅ Recomendada
 
 ```bash
-# Simplemente abre index.html en tu navegador
+python3 stats-server.py          # puerto 8000 por defecto
+python3 stats-server.py 8080     # o un puerto personalizado
 ```
 
-Opción 2 — Servidor local con Python:
+- Página: http://localhost:8000/
+- Panel de estadísticas (solo accesible desde tu propia máquina): http://localhost:8000/stats
+- Datos crudos en JSON: http://localhost:8000/stats/raw
+
+Cada visita y cada clic se guarda en `stats/visits.txt` y `stats/clicks.txt` con la **fecha y hora exacta de la Ciudad de México** (incluye horario de verano), la **IP** del visitante y el navegador. Los totales acumulados están en `stats/counters.json`.
+
+### Otras formas de ver la página (sin estadísticas)
 
 ```bash
+# Abrir index.html directamente en el navegador, o:
 python3 -m http.server 8000
-# Abre http://localhost:8000
-```
-
-Opción 3 — Servidor local con Node.js:
-
-```bash
 npx serve .
 ```
 
+Si la página se sirve sin `stats-server.py`, las peticiones de tracking fallan silenciosamente y todo lo demás funciona igual.
+
 ## 🌐 Despliegue
 
-Al ser un sitio 100% estático, puedes subirlo a cualquier hosting:
+Al ser un sitio esencialmente estático, puedes subirlo a cualquier hosting:
 
 - **GitHub Pages**: sube el repo y actívalo en *Settings → Pages*
 - **Netlify / Vercel**: arrastra la carpeta o conecta el repositorio
 - **cPanel / FTP**: sube `index.html` y la carpeta `img/` a `public_html`
+
+> ⚠️ Nota: el contador de estadísticas requiere correr `stats-server.py` (Python) en el servidor. En hostings 100% estáticos (GitHub Pages, Netlify) no habrá registro; ahí conviene usar Google Analytics o similar.
 
 ## 🛠️ Personalización
 

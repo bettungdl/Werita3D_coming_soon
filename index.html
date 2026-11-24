@@ -226,19 +226,19 @@
 
     <p class="social-title">Síguenos</p>
     <div class="socials">
-      <a class="social-btn tiktok" href="https://www.tiktok.com/@werita.3d" target="_blank" rel="noopener noreferrer" aria-label="TikTok de Werita 3D">
+      <a class="social-btn tiktok" data-track="tiktok" href="https://www.tiktok.com/@werita.3d" target="_blank" rel="noopener noreferrer" aria-label="TikTok de Werita 3D">
         <svg viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.3 0 .58.05.85.13V9.4a6.33 6.33 0 0 0-1-.05A6.34 6.34 0 0 0 7.9 22a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-3.94-2z"/></svg>
         TikTok
       </a>
-      <a class="social-btn instagram" href="https://www.instagram.com/werita3d" target="_blank" rel="noopener noreferrer" aria-label="Instagram de Werita 3D">
+      <a class="social-btn instagram" data-track="instagram" href="https://www.instagram.com/werita3d" target="_blank" rel="noopener noreferrer" aria-label="Instagram de Werita 3D">
         <svg viewBox="0 0 24 24"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 3.25.15 4.77 1.69 4.92 4.92.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.15 3.23-1.66 4.77-4.92 4.92-1.27.06-1.64.07-4.85.07s-3.58-.01-4.85-.07c-3.26-.15-4.77-1.7-4.92-4.92-.06-1.27-.07-1.64-.07-4.85s.01-3.58.07-4.85C2.38 3.92 3.9 2.38 7.15 2.23 8.42 2.18 8.8 2.16 12 2.16zm0 3.68a6.16 6.16 0 1 0 0 12.32 6.16 6.16 0 0 0 0-12.32zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.4-10.85a1.44 1.44 0 1 0 0 2.88 1.44 1.44 0 0 0 0-2.88z"/></svg>
         Instagram
       </a>
-      <a class="social-btn facebook" href="https://www.facebook.com/profile.php?id=61597034874808" target="_blank" rel="noopener noreferrer" aria-label="Facebook de Werita 3D">
+      <a class="social-btn facebook" data-track="facebook" href="https://www.facebook.com/profile.php?id=61597034874808" target="_blank" rel="noopener noreferrer" aria-label="Facebook de Werita 3D">
         <svg viewBox="0 0 24 24"><path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.7 4.53-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/></svg>
         Facebook
       </a>
-      <a class="social-btn web" href="https://werita3d.com" target="_blank" rel="noopener noreferrer" aria-label="Sitio web de Werita 3D">
+      <a class="social-btn web" data-track="web-werita3d-com" href="https://werita3d.com" target="_blank" rel="noopener noreferrer" aria-label="Sitio web de Werita 3D">
         <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm7.93 9h-3.02a15.7 15.7 0 0 0-1.2-5.4A8.03 8.03 0 0 1 19.93 11zM12 4c.9 1.2 1.87 3.6 2.06 7H9.94C10.13 7.6 11.1 5.2 12 4zM4.07 13h3.02c.08 1.9.5 3.77 1.2 5.4A8.03 8.03 0 0 1 4.07 13zm3.02-2H4.07a8.03 8.03 0 0 1 4.22-5.4A15.7 15.7 0 0 0 7.09 11zM12 20c-.9-1.2-1.87-3.6-2.06-7h4.12c-.19 3.4-1.16 5.8-2.06 7zm3.71-1.6c.7-1.63 1.12-3.5 1.2-5.4h3.02a8.03 8.03 0 0 1-4.22 5.4z"/></svg>
         Werita3D.com
       </a>
@@ -295,6 +295,24 @@
       p.style.animationDelay = (Math.random() * 15) + 's';
       particlesContainer.appendChild(p);
     }
+
+    // ===== Estadísticas internas (visitas y clics) =====
+    // Requiere stats-server.py; si la página se abre como archivo estático,
+    // las peticiones fallan silenciosamente sin afectar nada.
+    const track = (url) => {
+      try {
+        if (navigator.sendBeacon) navigator.sendBeacon(url);
+        else fetch(url, { keepalive: true }).catch(() => {});
+      } catch (e) { /* ignorar */ }
+    };
+
+    // Registrar visita al cargar la página
+    track('/api/visit');
+
+    // Registrar clic en cada enlace con data-track
+    document.querySelectorAll('a[data-track]').forEach(link => {
+      link.addEventListener('click', () => track('/api/click/' + link.dataset.track));
+    });
   </script>
 </body>
 </html>
