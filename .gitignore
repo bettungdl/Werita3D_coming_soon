@@ -1,2 +1,3 @@
-stats/
-server.log
+stats/*.txt
+stats/*.json
+!stats/*.php

@@ -1,29 +1,34 @@
 # Werita 3D — Página Coming Soon 🚀
 
-Página de "Muy Pronto" (Coming Soon) para **Werita 3D**, negocio de impresión 3D personalizada. Incluye logo, cuenta regresiva, enlaces a redes sociales y un diseño moderno con gradientes animados y partículas.
+Página de "Muy Pronto" (Coming Soon) para **Werita 3D**, negocio de impresión 3D personalizada. Incluye logo, cuenta regresiva, enlaces a redes sociales, diseño moderno con gradientes animados y un **contador interno de estadísticas en PHP** (visitas y clics).
 
 ## ✨ Características
 
 - Diseño responsive (móvil, tablet y escritorio)
 - Fondo con gradiente animado y partículas decorativas
-- Logo de Werita 3D
+- Logo de Werita 3D (`img/logoWerita.png`)
 - Cuenta regresiva para el lanzamiento
 - Botones de redes sociales con efectos hover
-- 📊 Contador interno de estadísticas: visitas y clics por enlace, con fecha/hora de CDMX e IP (vía `stats-server.py`)
-- Sin dependencias ni frameworks ni build (solo Python para el servidor de estadísticas)
+- 📊 Estadísticas internas en PHP puro: visitas y clics por enlace, con **fecha/hora exacta de CDMX**, **IP** y navegador
+- Panel de estadísticas protegido con contraseña
+- Los datos se guardan en archivos `.txt` / `.json` (fácil de revisar o respaldar)
 
 ## 📁 Estructura del proyecto
 
 ```
 .
-├── index.html        # Página coming soon (HTML + CSS + JS + tracking)
-├── stats-server.py   # Servidor local que registra visitas y clics
-├── stats/            # Se crea automáticamente al correr el servidor
-│   ├── visits.txt    # Una línea por visita: fecha/hora CDMX | IP | total | navegador
-│   ├── clicks.txt    # Una línea por clic: fecha/hora CDMX | IP | enlace
-│   └── counters.json # Totales acumulados
+├── index.php           # Página coming soon + API de tracking (PHP)
+├── stats/
+│   ├── store.php       # Lógica de registro (hora CDMX, IP, archivos .txt)
+│   ├── view.php        # Panel de estadísticas (con login)
+│   ├── config.php      # ⚠️ Contraseña del panel (cámbiala aquí)
+│   ├── .htaccess       # Bloquea acceso directo a los .txt/.json (Apache)
+│   ├── visits.txt      # Se crea solo: una línea por visita
+│   ├── clicks.txt      # Se crea solo: una línea por clic
+│   └── counters.json   # Se crea solo: totales acumulados
 ├── img/
 │   └── logoWerita.png  # Logo de Werita 3D
+├── .gitignore          # Ignora los datos generados en stats/
 └── README.md
 ```
 
@@ -36,46 +41,57 @@ Página de "Muy Pronto" (Coming Soon) para **Werita 3D**, negocio de impresión 
 | Facebook   | https://www.facebook.com/profile.php?id=61597034874808 |
 | Web        | https://werita3d.com |
 
-> **Nota:** El enlace de Facebook usa temporalmente la URL con ID de perfil. Cuando se pueda configurar el nombre de usuario, se debe actualizar a `https://www.facebook.com/Werita3D`.
+> **Nota:** El enlace de Facebook usa temporalmente la URL con ID de perfil porque aún no tiene nombre de usuario. Cuando esté disponible, actualizar a `https://www.facebook.com/Werita3D` en `index.php`.
 
-## 👀 Vista previa local (con estadísticas) ✅ Recomendada
+## 👀 Cómo ver la página localmente (con PHP)
 
-```bash
-python3 stats-server.py          # puerto 8000 por defecto
-python3 stats-server.py 8080     # o un puerto personalizado
-```
-
-- Página: http://localhost:8000/
-- Panel de estadísticas (solo accesible desde tu propia máquina): http://localhost:8000/stats
-- Datos crudos en JSON: http://localhost:8000/stats/raw
-
-Cada visita y cada clic se guarda en `stats/visits.txt` y `stats/clicks.txt` con la **fecha y hora exacta de la Ciudad de México** (incluye horario de verano), la **IP** del visitante y el navegador. Los totales acumulados están en `stats/counters.json`.
-
-### Otras formas de ver la página (sin estadísticas)
+Necesitas PHP instalado. Opciones rápidas:
 
 ```bash
-# Abrir index.html directamente en el navegador, o:
-python3 -m http.server 8000
-npx serve .
+# Opción 1: servidor embebido de PHP (la más fácil)
+php -S localhost:8000
+
+# Opción 2: si usas XAMPP / MAMP / Laragon
+# Copia la carpeta del proyecto a htdocs/ (o www/) y abre http://localhost/tu-carpeta/
 ```
 
-Si la página se sirve sin `stats-server.py`, las peticiones de tracking fallan silenciosamente y todo lo demás funciona igual.
+Luego abre en tu navegador:
 
-## 🌐 Despliegue
+- **Página:** http://localhost:8000/
+- **Panel de estadísticas:** http://localhost:8000/index.php?stats=1
+  - Contraseña por defecto: `werita2026` → **cámbiala en `stats/config.php`**
 
-Al ser un sitio esencialmente estático, puedes subirlo a cualquier hosting:
+### ¿Cómo funciona el conteo?
 
-- **GitHub Pages**: sube el repo y actívalo en *Settings → Pages*
-- **Netlify / Vercel**: arrastra la carpeta o conecta el repositorio
-- **cPanel / FTP**: sube `index.html` y la carpeta `img/` a `public_html`
+- **Visitas:** se registran automáticamente al cargar la página (lado del servidor, funciona aunque el visitante tenga JavaScript desactivado). Para no inflar el número con refrescos, la misma IP solo cuenta **1 visita cada 30 minutos**.
+- **Clics:** cada botón de red social dispara un registro cuando alguien hace clic (JavaScript).
+- Cada línea en `stats/visits.txt` y `stats/clicks.txt` incluye: fecha y hora de CDMX, IP, y detalles (navegador/referencia o enlace). Los totales están en `stats/counters.json`.
 
-> ⚠️ Nota: el contador de estadísticas requiere correr `stats-server.py` (Python) en el servidor. En hostings 100% estáticos (GitHub Pages, Netlify) no habrá registro; ahí conviene usar Google Analytics o similar.
+Ejemplo de `stats/visits.txt`:
+
+```
+2026-11-24 13:31:57 America/Mexico_City | IP: 201.22.33.44 | visitas totales: 1 | UA: Mozilla/5.0 ... | ref: -
+```
+
+## 🌐 Despliegue a tu sitio
+
+Este proyecto está pensado para cualquier hosting con PHP (prácticamente todos: cPanel, Hostinger, Namecheap, SiteGround, etc.):
+
+1. Sube el contenido del repo a `public_html/` (o la raíz de tu dominio): `index.php`, `img/` y `stats/`.
+2. Edita la contraseña en `stats/config.php`.
+3. Verifica que el servidor web pueda **escribir** dentro de `stats/` (permisos `755` o `775` en la carpeta).
+4. Visita tu dominio; la primera carga ya debería aparecer en `stats/visits.txt`.
+
+> ⚠️ No sirve en hostings 100% estáticos (GitHub Pages, Netlify free sin funciones) porque necesita PHP.
 
 ## 🛠️ Personalización
 
-- **Fecha de lanzamiento**: edita la constante de la cuenta regresiva en el bloque `<script>` de `index.html`.
-- **Colores**: modifica las variables CSS en `:root` dentro de `<style>` (`--accent`, `--accent-2`, etc.).
-- **Logo**: reemplaza `img/logoWerita.png` manteniendo el mismo nombre de archivo.
+- **Contraseña del panel:** `stats/config.php` → variable `$WERITA_STATS_PASSWORD`.
+- **Anti-refresco (throttle de visitas):** cambia `30 * 60` (segundos) en `index.php`, línea de `werita_record_visit_throttled()`.
+- **Fecha de lanzamiento:** edita la constante de la cuenta regresiva en el bloque `<script>` de `index.php`.
+- **Colores:** variables CSS en `:root` (`--accent`, `--accent-2`, etc.).
+- **Logo:** reemplaza `img/logoWerita.png` manteniendo el mismo nombre.
+- **Enlace de Facebook:** actualízalo en `index.php` cuando el perfil tenga nombre de usuario.
 
 ## 📄 Licencia
 

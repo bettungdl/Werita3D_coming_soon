@@ -1,3 +1,45 @@
+<?php
+/**
+ * Werita 3D — Página Coming Soon con contador interno de estadísticas (PHP).
+ *
+ * Registra en archivos .txt dentro de stats/:
+ *   - visits.txt   : una línea por visita (fecha/hora CDMX | IP | navegador)
+ *   - clicks.txt   : una línea por clic (fecha/hora CDMX | IP | enlace)
+ *   - counters.json: totales acumulados
+ *
+ * Panel de estadísticas: index.php?stats=1 (contraseña en stats/config.php)
+ */
+
+require_once __DIR__ . '/stats/store.php';
+
+$action = $_GET['api'] ?? null;
+
+// ===== API de tracking (llamada desde JS con fetch/sendBeacon) =====
+if ($action === 'visit') {
+    $result = werita_record_visit();
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($result);
+    exit;
+}
+if ($action === 'click') {
+    $link = preg_replace('/[^a-z0-9\-_]/i', '', $_GET['link'] ?? 'unknown');
+    $result = werita_record_click($link !== '' ? $link : 'unknown');
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($result);
+    exit;
+}
+
+// ===== Panel de estadísticas =====
+if (isset($_GET['stats'])) {
+    require __DIR__ . '/stats/view.php';
+    exit;
+}
+
+// ===== Registro server-side de la visita (funciona incluso sin JS) =====
+// Para no inflar el contador con refreshes, solo cuenta como visita nueva
+// si pasó más de 30 minutos desde la última vez que esta sesión/IP visitó.
+werita_record_visit_throttled(30 * 60);
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -296,22 +338,19 @@
       particlesContainer.appendChild(p);
     }
 
-    // ===== Estadísticas internas (visitas y clics) =====
-    // Requiere stats-server.py; si la página se abre como archivo estático,
-    // las peticiones fallan silenciosamente sin afectar nada.
-    const track = (url) => {
+    // ===== Estadísticas internas (clics) =====
+    // La VISITA ya se registró del lado del servidor al cargar la página
+    // (throttle de 30 min por IP). Aquí solo se registran los CLICS.
+    const trackClick = (link) => {
+      const url = 'index.php?api=click&link=' + encodeURIComponent(link);
       try {
         if (navigator.sendBeacon) navigator.sendBeacon(url);
         else fetch(url, { keepalive: true }).catch(() => {});
       } catch (e) { /* ignorar */ }
     };
 
-    // Registrar visita al cargar la página
-    track('/api/visit');
-
-    // Registrar clic en cada enlace con data-track
     document.querySelectorAll('a[data-track]').forEach(link => {
-      link.addEventListener('click', () => track('/api/click/' + link.dataset.track));
+      link.addEventListener('click', () => trackClick(link.dataset.track));
     });
   </script>
 </body>
