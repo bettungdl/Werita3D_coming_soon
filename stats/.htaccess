@@ -1,0 +1,5 @@
+# Protege los datos de estadísticas del acceso público directo.
+# El panel legible sigue disponible en: /index.php?stats=1 (con contraseña).
+<FilesMatch "\.(txt|json)$">
+    Require all denied
+</FilesMatch>
